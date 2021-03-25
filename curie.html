@@ -1,0 +1,217 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCF-ifier</title>
+
+    <style>
+        body {
+            font: normal 18px/1.5 "Fira Sans", "Helvetica Neue", sans-serif;
+            background: #3AAFAB;
+            color: #fff;
+            padding: 50px 0;
+        }
+
+        .clearall {
+            background-color: #1a5f5d !important;
+        }
+
+        .container {
+            width: 80%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .container * {
+            box-sizing: border-box;
+        }
+
+        .flex-outer,
+        .flex-inner {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .flex-outer {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .flex-outer li,
+        .flex-inner {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .flex-inner {
+            padding: 0 8px;
+            justify-content: space-between;
+        }
+
+        .flex-outer>li:not(:last-child) {
+            margin-bottom: 20px;
+        }
+
+        .flex-outer li label,
+        .flex-outer li p {
+            padding: 8px;
+            font-weight: 300;
+            letter-spacing: .09em;
+            text-transform: uppercase;
+        }
+
+        .flex-outer>li>label,
+        .flex-outer li p {
+            flex: 1 0 120px;
+            max-width: 220px;
+        }
+
+        .flex-outer>li>label+*,
+        .flex-inner {
+            flex: 1 0 220px;
+        }
+
+        .flex-outer li p {
+            margin: 0;
+        }
+
+        .flex-outer li input:not([type='checkbox']),
+        .flex-outer li textarea,
+        .flex-outer li select {
+            padding: 15px;
+            border: none;
+        }
+
+        .flex-outer li button {
+            margin-left: auto;
+            padding: 8px 16px;
+            border: none;
+            background: #333;
+            color: #f2f2f2;
+            text-transform: uppercase;
+            letter-spacing: .09em;
+            border-radius: 2px;
+        }
+
+        .flex-inner li {
+            width: 100px;
+        }
+
+        textarea {
+            font-family: 'Consolas', 'IBM Plex Mono', 'Courier New', Courier, monospace;
+        }
+    </style>
+    <script src="./script_adsense.js"></script>
+    <script src="./script_adsense_autoads.js"></script>
+    <script src="./script_adexchange.js"></script>
+</head>
+
+<body>
+    <!-- credits: https://codepen.io/tutsplus/pen/oLwYRJ -->
+    <div class="container">
+        <!--<form>-->
+        <ul class="flex-outer">
+            <li>
+                <label for="config">Pub config URL: </label>
+                <input type="search" name="config" id="config" placeholder="e.g.: //m2d.m2.ai/PUBDOMAIN.js"
+                    spellcheck="false" autocomplete="on">
+            </li>
+            <li>
+                <label for="tagtype">Tag type: </label>
+                <select name="tagtype" id="tagtype">
+                    <option value="AdSense">AdSense</option>
+                    <option value="AdSense Auto Ads">AdSense Auto Ads</option>
+                    <option value="Ad Exchange">Ad Exchange</option>
+                    <option value="GAM (Head &amp; Body)">GAM (Head &amp; Body)</option>
+                    <!--
+                    <option value="GAM (Head &amp; Body)">GAM (Head &amp; Body)</option>
+                    <option value="Google Analytics (gtag.js)">Google Analytics (gtag.js)</option>
+                    <option value="AdX + GA">AdX + GA</option>
+                    <option value="GAM + GA">GAM + GA</option>
+                    <option value="GAM Head &amp; Body (with refresh interval of 60 secs)">GAM Head &amp; Body (with
+                        refresh interval of 60 secs)</option>
+                    -->
+                </select>
+            </li>
+
+            <li>
+                <label for="originaltag" class="text">Raw tag: </label>
+                <textarea name="originaltag" id="originaltag" rows="10" placeholder="Paste the raw tag here"
+                    spellcheck="false"></textarea>
+            </li>
+
+            <li>
+                <button class="clearall" id="clearall">Clear all</button>
+                <button id="submit">Click to generate TCF 2.0 compliant tag</button>
+            </li>
+
+            <li id="result">
+                <label for="result" class="text">TCF 2.0 tag: </label>
+                <textarea name="result" id="resulttag" rows="20" placeholder="The resulting tag will appear here"
+                    readonly spellcheck="false"></textarea>
+            </li>
+        </ul>
+        <!--</form>-->
+    </div>
+
+
+    <script>
+
+        const clearall = document.getElementById("clearall");
+        clearall.addEventListener("click", function () {
+            document.getElementById("config").value = "";
+            document.getElementById("originaltag").value = "";
+            document.getElementById("resulttag").value = "";
+        });
+
+
+        const submitButton = document.getElementById("submit");
+        submitButton.addEventListener("click", () => {
+            let configUrl = document.getElementById("config").value;
+            let originalTag = document.getElementById("originaltag").value.replaceAll(`""`, `"`).replaceAll("\"\<", "\<").replaceAll("\>\"", "\>");
+            document.getElementById("originaltag").value = originalTag;
+            console.log(`This is the originalTag: ${originalTag}`);
+
+
+
+            if (originalTag.includes("XXX")) {
+                alert("Please make sure the tag you are pasting contains all numeric values, and does not include filler content such as ''XXXXXXXXXXXXXXX'' ");
+            } else {
+
+                const selected = document.getElementById("tagtype");
+                var selectedValue = selected.value;
+
+                // check if fields are filled
+                // if not empty (len > 0), then enter the switch
+                if (originalTag.length == 0 || configUrl.length == 0) {
+                    alert("Please fill all fields before trying to generate the compliant tag.");
+                } else {
+                    switch (selectedValue) {
+                        case "AdSense":
+                            adsense();
+                            break;
+                        case "AdSense Auto Ads":
+                            autoads();
+                            break;
+                        case "Ad Exchange":
+                            adx();
+                            break;
+                        case "GAM (Head &amp; Body)":
+                             gamheadandbody();
+                                break;
+                        default:
+                            alert(`This tool currently does not work with "${selectedValue}" tags. `);
+                    }
+                }
+            }
+        });
+
+    </script>
+</body>
+
+</html>
